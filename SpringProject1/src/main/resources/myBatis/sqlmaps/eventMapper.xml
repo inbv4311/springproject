@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="eventMapper">
+
+
+	<!-- 진행중인 eventlist -->
+	<select id="selectEventList" resultType="com.green.ffee.event.vo.EventFileVO">
+			
+		SELECT  STORED_FILE_NAME,TITLE,CONTENT,EVENTDAY,EVENTDAY2,ENO,EVENTDAY2 - TRUNC(SYSDATE) DDAY FROM (
+		
+		    SELECT 
+	                E.TITLE,
+	                E.CONTENT,
+                    E.EVENTDAY,
+	                E.EVENTDAY2,
+			        MP.ENO,
+			        MP.ORG_FILE_NAME,
+			        MP.STORED_FILE_NAME,
+			        ROW_NUMBER() OVER ( PARTITION BY MP.ENO ORDER BY MP.FILE_NO ) CNT
+	        FROM 	
+	        		EVENT_FILE MP,EVENT E
+            WHERE 	
+            		MP.ENO =E.ENO
+            AND     
+                    TO_CHAR(EVENTDAY2,'RRRR-MM-DD HH24:MI:SS') >=  TO_CHAR(SYSDATE-1/24/60/60, 'RRRR-MM-DD HH24:MI:SS')
+		)
+		WHERE 
+					CNT=1
+        ORDER BY 
+        			ENO DESC
+		
+	</select>
+	
+	
+	<!-- 종료된 이벤트 -->
+	<select id="selectEventEndList" resultType="com.green.ffee.event.vo.EventFileVO">
+	 <![CDATA[
+	SELECT  STORED_FILE_NAME,TITLE,CONTENT,EVENTDAY,EVENTDAY2,ENO,SLIDE_TITLE,HASHTAG,EVENTDAY2 - TRUNC(SYSDATE) DDAY FROM (
+		
+		    SELECT 
+	                E.TITLE,
+	                E.CONTENT,
+                    E.EVENTDAY,
+	                E.EVENTDAY2,
+	                E.SLIDE_TITLE,
+	                E.HASHTAG,
+			        MP.ENO,
+			        MP.ORG_FILE_NAME,
+			        MP.STORED_FILE_NAME,
+			        ROW_NUMBER() OVER ( PARTITION BY MP.ENO ORDER BY MP.FILE_NO ) CNT
+	        FROM 	
+	        		EVENT_FILE MP,EVENT E
+            WHERE 	
+            		MP.ENO =E.ENO
+            AND     
+                    TO_CHAR(EVENTDAY2,'RRRR-MM-DD HH24:MI:SS') <  TO_CHAR(SYSDATE-1/24/60/60, 'RRRR-MM-DD HH24:MI:SS')
+		)
+		WHERE 
+					CNT=1
+        ORDER BY 
+        			ENO DESC
+ 	]]>     	
+	</select>
+
+	<select id="selectlist" resultType="com.green.ffee.event.vo.EventVO">
+		
+			
+	SELECT  
+		EF.STORED_FILE_NAME,
+		E.TITLE,
+		E.EVENTDAY,
+		E.EVENTDAY2,
+		E.REGDATE, 
+		EF.ENO,
+		E.ENO
+	FROM 
+		EVENT_FILE EF,EVENT E
+	WHERE
+	    EF.ENO = E.ENO
+	ORDER BY 
+		E.REGDATE DESC
+	</select>
+
+
+	<!-- 게시판 글 작성 -->
+	<insert id="insert" parameterType="com.green.ffee.event.vo.EventFileVO" useGeneratedKeys="true" keyProperty="eno">
+	
+	<!-- 자동증가  -->
+    <selectKey keyProperty="eno" resultType="int" order="BEFORE">
+    	SELECT EVENT_SEQ.NEXTVAL FROM DUAL
+    </selectKey>
+    
+	INSERT INTO EVENT(    	ENO 
+	   					       , TITLE 
+	   					       , EVENTDAY
+	   					       , EVENTDAY2
+	   					       , CONTENT 
+	   					       , WRITER  
+	   					       , SLIDE_TITLE
+	   					       , HASHTAG
+	   					       )
+	                  VALUES(    #{eno}
+	                 		   , #{title}
+                               , #{eventday}
+                               , #{eventday2}
+	                 		   , #{content}
+	                 		   , #{writer}
+	                 		   , #{slide_title}
+	                 		   , #{hashtag}
+	                 		     )
+   
+    </insert>
+   
+   <!-- 파일 넣기  -->
+    <insert id="insertFile" parameterType="hashMap">
+		INSERT INTO EVENT_FILE(
+			FILE_NO,
+			ENO,
+			ORG_FILE_NAME,
+			STORED_FILE_NAME,
+			FILE_SIZE
+		)VALUES(
+			SEQ_EVENT_FILE.NEXTVAL,
+			#{ENO},
+			#{ORG_FILE_NAME},
+			#{STORED_FILE_NAME},
+			#{FILE_SIZE}
+		)
+    </insert>
+    
+    <!-- 게시글 목록 조회 -->
+    <select id="read" parameterType="int" resultType="com.green.ffee.event.vo.EventVO">
+    	SELECT   ENO
+			   , TITLE
+			   , EVENTDAY
+			   , EVENTDAY2
+			   , CONTENT
+			   , WRITER
+			   , REGDATE
+		  FROM EVENT
+		 WHERE ENO = #{eno}
+		 
+    </select>
+    
+    <!-- 첨부파일조회 -->
+    
+    <select id="selectFileList" parameterType="int" resultType="com.green.ffee.event.vo.EventFileVO">
+    	SELECT FILE_NO,
+			   ORG_FILE_NAME,
+			   STORED_FILE_NAME,
+			   ROUND(FILE_SIZE/1024,1) AS FILE_SIZE
+		  FROM EVENT_FILE
+		 WHERE ENO = #{eno}
+		   AND DEL_GB = 'N'
+    </select>
+</mapper>

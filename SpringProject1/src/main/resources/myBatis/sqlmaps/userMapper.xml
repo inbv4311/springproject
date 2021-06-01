@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="User">
+	<select id="Login"
+  		parameterType = "hashmap"
+      resultType="com.green.ffee.user.vo.UserVo" >
+    SELECT    USER_ID, USER_PW, USER_NAME, USER_BIRTH, USER_EMAIL, USER_PHONE, GENDER
+    	, USER_OADDRESS, USER_ADDRESS, USER_DTADDRESS, REGDATE, NICKNAME, LOCA_PROV
+     FROM     USER_TBL
+     WHERE	  USER_ID = #{user_id}
+  </select>
+  
+  <insert id="Register" parameterType = "hashmap">
+  	INSERT INTO USER_TBL( USER_ID, USER_PW, USER_NAME, USER_BIRTH, USER_EMAIL, USER_PHONE, GENDER
+    	, USER_OADDRESS, USER_ADDRESS, USER_DTADDRESS, NICKNAME, LOCA_PROV)
+	VALUES( #{user_id}, #{user_pw}, #{user_name}, #{user_birth}, #{user_email}, #{user_phone}, #{gender}
+    	, #{user_oaddress}, #{user_address}, #{user_dtaddress}, #{nickname}, #{loca_prov})
+	
+  </insert>
+  
+  <!-- 아이디 중복 검사 -->
+  <select id="checkOverId"
+      resultType="int" >
+    SELECT    COUNT(user_id)
+     FROM     USER_TBL
+     WHERE	  USER_ID = #{user_id}
+  </select>
+  
+  <!-- 닉네임 중복 검사 -->
+  <select id="checkOverNickname"
+      resultType="int" >
+    SELECT    COUNT(nickname)
+     FROM     USER_TBL
+     WHERE	  NICKNAME = #{nickname}
+  </select>
+  
+  <update id="userUpdate" parameterType = "hashmap">
+  	UPDATE USER_TBL 
+  	SET USER_PW = #{user_pw},
+  		USER_NAME = #{user_name},
+  		USER_EMAIL = #{user_email},
+  		USER_PHONE = #{user_phone},
+  		USER_OADDRESS = #{user_oaddress},
+  		USER_ADDRESS = #{user_address},
+  		USER_DTADDRESS = #{user_dtaddress}
+  	WHERE	  USER_ID = #{user_id}
+  </update>
+  
+  <delete id="userDelete" parameterType="hashmap">
+		DELETE 
+		  FROM USER_TBL
+		 WHERE USER_ID = #{user_id}
+	</delete>
+	
+	<!-- 프로필 사진 업로드 -->
+    <insert id="insertProfile" parameterType="hashMap">
+		INSERT INTO USER_FILE(
+			USER_IMG_NUM,
+			USER_ID,
+			FILENAME,
+			FILEEXT,
+			SFILENAME
+		)VALUES(
+			SEQ_USER_IMG_NUM.NEXTVAL,
+			#{user_id},
+			#{filename},
+			#{fileext},
+			#{sfilename}
+		)
+    </insert>
+    
+    <!-- 프로필 사진 읽기 -->
+    <select id="readProfile"
+      parameterType="hashmap" 
+      resultType="com.green.ffee.user.vo.ProfileVo"
+      >
+    SELECT    USER_IMG_NUM,
+			USER_ID,
+			FILENAME,
+			FILEEXT,
+			SFILENAME
+     FROM     USER_FILE
+     WHERE	  USER_ID = #{user_id}
+  </select>
+    
+    <!-- 프로필 사진 삭제 -->
+    <delete id="deleteProfile" parameterType="hashMap">
+    	DELETE 
+		  FROM USER_FILE
+		 WHERE USER_ID = #{user_id}
+	</delete>
+    
+    <select id="UserList"
+  		parameterType = "hashmap"
+      resultType="com.green.ffee.user.vo.UserVo" >
+    SELECT    USER_ID, USER_PW, USER_NAME, USER_BIRTH, USER_EMAIL, USER_PHONE, GENDER
+    	, USER_OADDRESS, USER_ADDRESS, USER_DTADDRESS, REGDATE, NICKNAME, LOCA_PROV
+     FROM     USER_TBL
+  </select>
+    <!-- target 에 있는 usermapper랑 다르면 다른부분이 작동하지 않는다 -->
+</mapper>
+
+
+
+
+
+
+
+
+
+
